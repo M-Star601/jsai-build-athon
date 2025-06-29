@@ -9,8 +9,11 @@ import dotenv from "dotenv";
 import { AzureChatOpenAI } from "@langchain/openai";
 import { BufferMemory } from "langchain/memory";
 import { ChatMessageHistory } from "langchain/stores/message/in_memory";
+import { AgentService } from "./agentService.js";
  
 const sessionMemories = {};
+ 
+const agentService = new AgentService();
  
 dotenv.config();
  
@@ -124,6 +127,17 @@ app.post("/chat", async (req, res) => {
         };
  
     try {
+ 
+        const mode = req.body.mode || "basic";
+ 
+        // If agent mode is selected, route to agent service
+        if (mode === "agent") {
+            const agentResponse = await agentService.processMessage(sessionId, userMessage);
+            return res.json({
+                reply: agentResponse.reply,
+                sources: []
+            });
+        }
         // Build final messages array
         const messages = [
             systemMessage,
